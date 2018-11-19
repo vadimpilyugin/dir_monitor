@@ -16,6 +16,7 @@ func filterNewFiles(fileQueue chan string, watcher *fsnotify.Watcher) {
         log.Fatal("Could not read event:", event, ok)
       }
       fn := path.Base(event.Name)
+      log.Println("Some event:", event)
       if (event.Op & fsnotify.Create == fsnotify.Create) {
         log.Println("Created file:", fn)
         createClose[fn] = EMPTY_VALUE
@@ -25,8 +26,6 @@ func filterNewFiles(fileQueue chan string, watcher *fsnotify.Watcher) {
           delete(createClose, fn)
           fileQueue <- fn
         }
-      } else {
-        log.Println("Some event:", event)
       }
     case err, ok := <-watcher.Errors:
       if !ok {
