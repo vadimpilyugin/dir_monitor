@@ -4,11 +4,6 @@ import (
   "net/http"
   "bytes"
   "log"
-  "io"
-  "mime/multipart"
-  "os"
-  "path/filepath"
-  "path"
   "time"
 )
 
@@ -17,11 +12,16 @@ const (
   N_SECONDS = 1
 )
 
+func (fb FileBody) Close() error {
+  err := fb.file.Close()
+  return err
+}
+
 func SendFiles(dirPath string, url string, fileQueue chan string, readyQueue chan string) {
   for {
     fn := <-fileQueue
     go func () {
-      err := sendFile(url, path.Join(dirPath, fn))
+      err := sendFile(url, dirPath, fn)
       if err != nil {
         time.Sleep(N_SECONDS * time.Second) // if there is no connection, then wait
         fileQueue <- fn
@@ -32,8 +32,8 @@ func SendFiles(dirPath string, url string, fileQueue chan string, readyQueue cha
   }
 }
 
-func sendFile (url string, name string) error {
-  request, err := uploadRequest(url, name)
+func sendFile (url string, dirPath, fn string) error {
+  request, err := uploadRequest(url, dirPath, fn)
   if err != nil {
     log.Println("uploadRequest failed:", err)
     return err
@@ -57,35 +57,17 @@ func sendFile (url string, name string) error {
   return nil
 }
 
-func uploadRequest(uri string, full_path string) (*http.Request, error) {
-  file, err := os.Open(full_path)
-  if err != nil {
-    return nil, err
-  }
-  defer file.Close()
-
-  body := &bytes.Buffer{}
-  writer := multipart.NewWriter(body)
-  
-  part, err := writer.CreateFormFile(PARAM_NAME, filepath.Base(full_path))
+func uploadRequest(uri string, dirPath, fn string) (*http.Request, error) {
+  fb, err := NewBody(dirPath, fn)
   if err != nil {
     return nil, err
   }
 
-  _, err = io.Copy(part, file)
+  req, err := http.NewRequest("POST", uri, fb.Reader)
   if err != nil {
     return nil, err
   }
-
-  err = writer.Close()
-  if err != nil {
-    return nil, err
-  }
-
-  req, err := http.NewRequest("POST", uri, body)
-  if err != nil {
-    return nil, err
-  }
-  req.Header.Set("Content-Type", writer.FormDataContentType())
+  req.Header.Set("Content-Type", fb.ContentType)
+  req.ContentLength = fb.Length
   return req, nil
 }
