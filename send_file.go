@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
   "http_over_at"
+  "errors"
 )
 
 const (
@@ -54,6 +55,9 @@ func sendFile(url string, dirPath, fn string) error {
 			return err
 		}
 		resp.Body.Close()
+    if resp.StatusCode != http.StatusOK {
+      return errors.New(http.StatusText(resp.StatusCode))
+    }
 		log.Println("--- ", resp.StatusCode)
 		log.Println("--- ", resp.Header)
 	}
