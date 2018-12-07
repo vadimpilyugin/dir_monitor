@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"time"
+  "http_over_at"
 )
 
 const (
@@ -38,7 +39,9 @@ func sendFile(url string, dirPath, fn string) error {
 		log.Println("uploadRequest failed:", err)
 		return err
 	}
-	client := &http.Client{}
+	client := &http.Client{
+    Transport: http_over_at.Rqstr,
+  }
 	resp, err := client.Do(request)
 	if err != nil {
 		log.Println("client.Do failed:", err)
@@ -67,7 +70,7 @@ func uploadRequest(uri string, dirPath, fn string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Content-Type", fb.ContentType)
+  req.Header.Set("Content-Type", fb.ContentType)
 	req.ContentLength = fb.Length
 	return req, nil
 }
