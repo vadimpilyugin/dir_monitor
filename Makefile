@@ -15,6 +15,7 @@ clean:
 	rm -f $(BINARY_UNIX)
 deps:
 	$(GOGET) github.com/vadimpilyugin/fsnotify
+	$(GOGET) github.com/vadimpilyugin/http_over_at
 
 
 # Cross compilation

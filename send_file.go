@@ -1,11 +1,11 @@
 package main
 
 import (
-	"bytes"
-	"log"
-	"net/http"
-	"time"
-  "http_over_at"
+  "bytes"
+  "log"
+  "net/http"
+  "time"
+  "github.com/vadimpilyugin/http_over_at"
   "errors"
 )
 
