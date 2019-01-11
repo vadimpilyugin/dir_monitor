@@ -32,13 +32,19 @@ func SendFiles(dirPath string, url string, fileQueue chan string, readyQueue cha
 	}
 }
 
+func noRedir(req *http.Request, via []*http.Request) error {
+	return http.ErrUseLastResponse
+}
+
 func sendFile(url string, dirPath, fn string) error {
 	request, err := uploadRequest(url, dirPath, fn)
 	if err != nil {
 		log.Println("uploadRequest failed:", err)
 		return err
 	}
-	client := &http.Client{}
+	client := &http.Client{
+		CheckRedirect: noRedir,
+	}
 	resp, err := client.Do(request)
 	if err != nil {
 		log.Println("client.Do failed:", err)
@@ -53,6 +59,9 @@ func sendFile(url string, dirPath, fn string) error {
 		resp.Body.Close()
 		log.Println("--- ", resp.StatusCode)
 		log.Println("--- ", resp.Header)
+		if resp.StatusCode != http.StatusSeeOther {
+			log.Println("Wrong status code")
+		}
 	}
 	return nil
 }
