@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"errors"
 )
 
 const (
@@ -20,7 +21,7 @@ func (fb FileBody) Close() error {
 func SendFiles(dirPath string, url string, fileQueue chan string, readyQueue chan string) {
 	for {
 		fn := <-fileQueue
-		go func() {
+		// go func() {
 			err := sendFile(url, dirPath, fn)
 			if err != nil {
 				time.Sleep(N_SECONDS * time.Second) // if there is no connection, then wait
@@ -28,7 +29,7 @@ func SendFiles(dirPath string, url string, fileQueue chan string, readyQueue cha
 			} else {
 				readyQueue <- fn
 			}
-		}()
+		// }()
 	}
 }
 
@@ -61,6 +62,7 @@ func sendFile(url string, dirPath, fn string) error {
 		log.Println("--- ", resp.Header)
 		if resp.StatusCode != http.StatusSeeOther {
 			log.Println("Wrong status code")
+			return errors.New("Wrong status code")
 		}
 	}
 	return nil

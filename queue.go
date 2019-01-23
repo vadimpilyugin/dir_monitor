@@ -35,7 +35,7 @@ func EnqueueDir(dirPath string, fileQueue chan string, readyQueue chan string) {
 func readSentList(dirPath string) map[string]string {
 	sentListFile, err := os.OpenFile(path.Join(dirPath, SENT_LIST_FN), MODE_CREATE, PERM_ALL)
 	if err != nil {
-		log.Fatal("Couldn't read sent_file", err)
+		log.Fatal("Couldn't read sent_list", err)
 	}
 	defer sentListFile.Close()
 
@@ -45,7 +45,7 @@ func readSentList(dirPath string) map[string]string {
 		sentList[scanner.Text()] = EMPTY_VALUE
 	}
 	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
+		log.Println("Couldn't scan sent_list", err)
 	}
 	return sentList
 }
