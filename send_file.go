@@ -76,7 +76,7 @@ func sendFile(url string, dirPath, fn string) error {
 	}
 	var client *http.Client
 	up := false
-	for _, interfc := range []string{"ppp0", "eth0", "eth1", "enp3s0"} {
+	for _, interfc := range []string{"ppp0", "eth0", "enp3s0"} {
 		if checkInterface(interfc) {
 			client = &http.Client {
 				CheckRedirect: noRedir,
