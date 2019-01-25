@@ -79,6 +79,7 @@ func sendFile(url string, dirPath, fn string) error {
 				CheckRedirect: noRedir,
 			}
 			up = true
+			break
 		}
 	}
 	if !up {
