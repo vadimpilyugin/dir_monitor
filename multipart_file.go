@@ -35,6 +35,14 @@ func multipartFooter(bound string) *bytes.Buffer {
 	return buf
 }
 
+func (fb *FileBody) Read(p []byte) (int, error) {
+	n, err := fb.file.Read(p)
+	if err == io.EOF {
+		fb.file.Close()
+	}
+	return n, err
+}
+
 func NewBody(dirPath, fn string) (*FileBody, error) {
 	fb := &FileBody{}
 	header, bound, contentType, err := multipartHeader(fn)
@@ -44,7 +52,6 @@ func NewBody(dirPath, fn string) (*FileBody, error) {
 	fb.header = header
 	fb.ContentType = contentType
 	fb.footer = multipartFooter(bound)
-	// FIXME: we don't close the file
 	fb.file, err = os.Open(path.Join(dirPath, fn))
 	if err != nil {
 		return nil, err
@@ -53,7 +60,7 @@ func NewBody(dirPath, fn string) (*FileBody, error) {
 	if err != nil {
 		return nil, err
 	}
-	fb.Reader = io.MultiReader(fb.header, fb.file, fb.footer)
+	fb.Reader = io.MultiReader(fb.header, fb, fb.footer)
 	fb.Length = int64(fb.header.Len()) + int64(fb.footer.Len()) + fileStat.Size()
 	return fb, nil
 }

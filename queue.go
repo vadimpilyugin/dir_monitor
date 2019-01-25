@@ -39,7 +39,7 @@ func readSentList(dirPath string) map[string]string {
 	}
 	defer sentListFile.Close()
 
-	sentList := make(map[string]string)
+	sentList := map[string]string{}
 	scanner := bufio.NewScanner(sentListFile)
 	for scanner.Scan() {
 		sentList[scanner.Text()] = EMPTY_VALUE
