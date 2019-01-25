@@ -30,7 +30,9 @@ func SendFiles(dirPath string, url string, fileQueue chan string, readyQueue cha
 			if err != nil {
 				log.Println("Failed to send file", err)
 				time.Sleep(N_SECONDS * time.Second) // if there is no connection, then wait
-				fileQueue <- fn
+				go func() {
+					fileQueue <- fn
+				}()
 			} else {
 				readyQueue <- fn
 			}
