@@ -1,14 +1,14 @@
 package main
 
 import (
-  "bytes"
-  "log"
-  "net/http"
-  "time"
-  "http_over_at"
-  "errors"
-  "net"
-  "strings"
+	"bytes"
+	"errors"
+	"http_over_at"
+	"log"
+	"net"
+	"net/http"
+	"strings"
+	"time"
 )
 
 const (
@@ -26,16 +26,16 @@ func SendFiles(dirPath string, url string, fileQueue chan string, readyQueue cha
 	for {
 		fn := <-fileQueue
 		// go func() {
-			err := sendFile(url, dirPath, fn)
-			if err != nil {
-				log.Println("Failed to send file", err)
-				time.Sleep(N_SECONDS * time.Second) // if there is no connection, then wait
-				go func() {
-					fileQueue <- fn
-				}()
-			} else {
-				readyQueue <- fn
-			}
+		err := sendFile(url, dirPath, fn)
+		if err != nil {
+			log.Println("Failed to send file", err)
+			time.Sleep(N_SECONDS * time.Second) // if there is no connection, then wait
+			go func() {
+				fileQueue <- fn
+			}()
+		} else {
+			readyQueue <- fn
+		}
 		// }()
 	}
 }
@@ -78,7 +78,7 @@ func sendFile(url string, dirPath, fn string) error {
 	up := false
 	for _, interfc := range []string{"ppp0", "eth0", "enp3s0"} {
 		if checkInterface(interfc) {
-			client = &http.Client {
+			client = &http.Client{
 				CheckRedirect: noRedir,
 			}
 			up = true
@@ -87,7 +87,7 @@ func sendFile(url string, dirPath, fn string) error {
 		}
 	}
 	if !up {
-		client = &http.Client {
+		client = &http.Client{
 			Transport: http_over_at.Rqstr,
 		}
 		log.Println("--- Using USB interface")
@@ -124,7 +124,7 @@ func uploadRequest(uri string, dirPath, fn string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-  req.Header.Set("Content-Type", fb.ContentType)
+	req.Header.Set("Content-Type", fb.ContentType)
 	req.ContentLength = fb.Length
 	return req, nil
 }

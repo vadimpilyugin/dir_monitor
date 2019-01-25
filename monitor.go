@@ -6,7 +6,7 @@ import (
 	"path"
 )
 
-/* 
+/*
 	Файл запишется в выходную очередь только в том случае, если
 	1) Он был создан и затем
 	2) он был закрыт
@@ -23,10 +23,10 @@ func filterNewFiles(fileQueue chan string, watcher *fsnotify.Watcher) {
 			} else {
 				fn := path.Base(event.Name)
 				log.Println("New event:", event)
-				if event.Op & fsnotify.Create == fsnotify.Create {
+				if event.Op&fsnotify.Create == fsnotify.Create {
 					log.Println("File was created:", fn)
 					createdOrClosed[fn] = EMPTY_VALUE
-				} else if event.Op & fsnotify.Close == fsnotify.Close {
+				} else if event.Op&fsnotify.Close == fsnotify.Close {
 					log.Println("File was closed:", event)
 					if _, found := createdOrClosed[fn]; found {
 						delete(createdOrClosed, fn)
