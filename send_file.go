@@ -14,6 +14,8 @@ import (
 const (
 	PARAM_NAME = "file"
 	N_SECONDS  = 1
+	REQ_WITH = "X-Requested-With"
+	DIR_MON = "dir-monitor"
 )
 
 func (fb FileBody) Close() error {
@@ -128,6 +130,7 @@ func uploadRequest(uri string, dirPath, fn string) (*http.Request, error) {
 		return nil, err
 	}
   req.Header.Set("Content-Type", fb.ContentType)
+  req.Header.Set(REQ_WITH, DIR_MON)
 	req.ContentLength = fb.Length
 	return req, nil
 }
