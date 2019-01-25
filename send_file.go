@@ -7,6 +7,8 @@ import (
   "time"
   "github.com/vadimpilyugin/http_over_at"
   "errors"
+  "net"
+  "strings"
 )
 
 const (
@@ -20,9 +22,10 @@ func (fb FileBody) Close() error {
 }
 
 func SendFiles(dirPath string, url string, fileQueue chan string, readyQueue chan string) {
+	availableInterfaces()
 	for {
 		fn := <-fileQueue
-		go func() {
+		// go func() {
 			err := sendFile(url, dirPath, fn)
 			if err != nil {
 				time.Sleep(N_SECONDS * time.Second) // if there is no connection, then wait
@@ -30,7 +33,35 @@ func SendFiles(dirPath string, url string, fileQueue chan string, readyQueue cha
 			} else {
 				readyQueue <- fn
 			}
-		}()
+		// }()
+	}
+}
+
+func noRedir(req *http.Request, via []*http.Request) error {
+	return http.ErrUseLastResponse
+}
+
+func availableInterfaces() {
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("Available network interfaces on this machine")
+	for _, i := range interfaces {
+		log.Println(i.Name, "--- Name")
+	}
+}
+
+func checkInterface(ifName string) bool {
+	byNameInterface, err := net.InterfaceByName(ifName)
+	if err != nil {
+		log.Println(err, "["+ifName+"]")
+		return false
+	}
+	if strings.Contains(byNameInterface.Flags.String(), "up") {
+		return true
+	} else {
+		return false
 	}
 }
 
@@ -40,9 +71,21 @@ func sendFile(url string, dirPath, fn string) error {
 		log.Println("uploadRequest failed:", err)
 		return err
 	}
-	client := &http.Client{
-    Transport: http_over_at.Rqstr,
-  }
+	var client *http.Client
+	up := false
+	for _, interfc := range []string{"ppp0", "eth0", "eth1", "enp3s0"} {
+		if checkInterface(interfc) {
+			client = &http.Client {
+				CheckRedirect: noRedir,
+			}
+			up = true
+		}
+	}
+	if !up {
+		client = &http.Client {
+			Transport: http_over_at.Rqstr,
+		}
+	}
 	resp, err := client.Do(request)
 	if err != nil {
 		log.Println("client.Do failed:", err)
@@ -60,6 +103,10 @@ func sendFile(url string, dirPath, fn string) error {
     }
 		log.Println("--- ", resp.StatusCode)
 		log.Println("--- ", resp.Header)
+		if resp.StatusCode != http.StatusSeeOther {
+			log.Println("Wrong status code")
+			return errors.New("Wrong status code")
+		}
 	}
 	return nil
 }

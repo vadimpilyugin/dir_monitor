@@ -23,8 +23,4 @@ func main() {
 	EnqueueDir(dirToMonitor, fileQueue, readyQueue)
 	StartMonitor(dirToMonitor, fileQueue)
 	SendFiles(dirToMonitor, postUrl, fileQueue, readyQueue)
-
-	// done := make(chan bool)
-	// go monitor(dirToMonitor, postUrl)
-	// <-done
 }
