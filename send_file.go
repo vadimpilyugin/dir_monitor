@@ -48,14 +48,14 @@ func availableInterfaces() {
 	}
 	log.Println("Available network interfaces on this machine")
 	for _, i := range interfaces {
-		log.Println(i.Name, "--- Name")
+		log.Println("--- Interface name: ", i.Name)
 	}
 }
 
 func checkInterface(ifName string) bool {
 	byNameInterface, err := net.InterfaceByName(ifName)
 	if err != nil {
-		log.Println(err, "["+ifName+"]")
+		log.Println("["+ifName+"]", err)
 		return false
 	}
 	if strings.Contains(byNameInterface.Flags.String(), "up") {
