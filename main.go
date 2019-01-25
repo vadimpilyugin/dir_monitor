@@ -17,7 +17,7 @@ func main() {
 	log.Println("Hello, world!")
 	dirToMonitor := os.Args[1]
 	postUrl := os.Args[2]
-	fileQueue := make(chan string)
+	fileQueue := make(chan string, 1)
 	readyQueue := make(chan string)
 
 	EnqueueDir(dirToMonitor, fileQueue, readyQueue)
