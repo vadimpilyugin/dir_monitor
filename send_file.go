@@ -79,6 +79,7 @@ func sendFile(url string, dirPath, fn string) error {
 				CheckRedirect: noRedir,
 			}
 			up = true
+			log.Println("--- Using interface: ", interfc)
 			break
 		}
 	}
@@ -86,6 +87,7 @@ func sendFile(url string, dirPath, fn string) error {
 		client = &http.Client {
 			Transport: http_over_at.Rqstr,
 		}
+		log.Println("--- Using USB interface")
 	}
 	resp, err := client.Do(request)
 	if err != nil {
