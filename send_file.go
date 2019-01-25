@@ -5,7 +5,7 @@ import (
   "log"
   "net/http"
   "time"
-  "github.com/vadimpilyugin/http_over_at"
+  "http_over_at"
   "errors"
   "net"
   "strings"

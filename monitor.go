@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/vadimpilyugin/fsnotify"
+	"fsnotify"
 	"log"
 	"path"
 )
