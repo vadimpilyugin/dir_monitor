@@ -76,7 +76,7 @@ func getClient() *http.Client {
 	up := false
 	for _, interfc := range []string{"ppp0", "eth0", "enp3s0"} {
 		if checkInterface(interfc) {
-			client = &http.Client {
+			client = &http.Client{
 				CheckRedirect: noRedir,
 			}
 			up = true
@@ -85,7 +85,7 @@ func getClient() *http.Client {
 		}
 	}
 	if !up {
-		client = &http.Client {
+		client = &http.Client{
 			Transport: http_over_at.Rqstr,
 		}
 		log.Println("--- Using USB interface")
