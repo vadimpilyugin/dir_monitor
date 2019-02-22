@@ -8,7 +8,12 @@ import (
   "errors"
   "net"
   "strings"
-  sw "dirmon_client"
+  // "context"
+  apiclient "go-swagger-client/client"
+  operations "go-swagger-client/client/operations"
+  runtime "github.com/go-openapi/runtime"
+  strfmt "github.com/go-openapi/strfmt"
+  httptransport "github.com/go-openapi/runtime/client"
   "os"
   "path"
 )
@@ -16,14 +21,16 @@ import (
 const (
 	PARAM_NAME = "file"
 	N_SECONDS  = 1
+	DEFAULT_DURATION = 120
 )
 
 var (
-	cfg *sw.Configuration
+	api *apiclient.Dirmon
 )
 
 func init() {
-	cfg = sw.NewConfiguration()
+	transport := httptransport.New("localhost", "", nil)
+	api = apiclient.New(transport, strfmt.Default)
 }
 
 func SendFiles(dirPath string, url string, fileQueue chan string, readyQueue chan string) {
@@ -32,7 +39,7 @@ func SendFiles(dirPath string, url string, fileQueue chan string, readyQueue cha
 		fn := <-fileQueue
 		err := sendFile(url, dirPath, fn)
 		if err != nil {
-			log.Println("Failed to send file", err)
+			log.Println("Failed to send file: ", err)
 			time.Sleep(N_SECONDS * time.Second) // if there is no connection, then wait
 			go func() {
 				fileQueue <- fn
@@ -94,25 +101,20 @@ func getClient() *http.Client {
 }
 
 func sendFile(url string, dirPath, fn string) error {
-	
-	cfg.HTTPClient = getClient()
-	apiClient := sw.NewAPIClient(cfg)
 	f, err := os.Open(path.Join(dirPath, fn))
 	if err != nil {
 		log.Fatal(err)
 	}
-	payload, resp, err := apiClient.DefaultApi.UploadImagePost(nil, map[string]interface{}{
-    "image" : f,
-  })
+	params := operations.NewUploadImagePostParamsWithHTTPClient(getClient())
+	params.SetFile(runtime.NamedReader(fn, f))
+	params.SetTimeout(DEFAULT_DURATION * time.Second)
+	resp, err := api.Operations.UploadImagePost(params)
 	if err != nil {
-		log.Println("UploadImagePost failed:", err)
 		return err
-	} else {
-		log.Println(payload, resp)
-		if resp.StatusCode != http.StatusOK {
-			log.Println("Wrong status code")
-			return errors.New("Wrong status code")
-		}
+	}
+	log.Println(resp.Payload)
+	if !resp.Payload.Ok {
+		return errors.New(resp.Payload.Descr)
 	}
 	return nil
 }
