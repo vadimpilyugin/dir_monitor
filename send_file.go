@@ -1,26 +1,26 @@
 package main
 
 import (
-  "log"
-  "net/http"
-  "time"
-  "http_over_at"
-  "errors"
-  "net"
-  "strings"
-  // "context"
-  apiclient "go-swagger-client/client"
-  operations "go-swagger-client/client/operations"
-  runtime "github.com/go-openapi/runtime"
-  strfmt "github.com/go-openapi/strfmt"
-  httptransport "github.com/go-openapi/runtime/client"
-  "os"
-  "path"
+	"errors"
+	"http_over_at"
+	"log"
+	"net"
+	"net/http"
+	"strings"
+	"time"
+	// "context"
+	runtime "github.com/go-openapi/runtime"
+	httptransport "github.com/go-openapi/runtime/client"
+	strfmt "github.com/go-openapi/strfmt"
+	apiclient "go-swagger-client/client"
+	operations "go-swagger-client/client/operations"
+	"os"
+	"path"
 )
 
 const (
-	PARAM_NAME = "file"
-	N_SECONDS  = 1
+	PARAM_NAME       = "file"
+	N_SECONDS        = 1
 	DEFAULT_DURATION = 120
 )
 
