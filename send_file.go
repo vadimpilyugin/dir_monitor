@@ -10,7 +10,7 @@ import (
 	"time"
 	// "context"
 	runtime "github.com/go-openapi/runtime"
-	// httptransport "github.com/go-openapi/runtime/client"
+	httptransport "github.com/go-openapi/runtime/client"
 	strfmt "github.com/go-openapi/strfmt"
 	apiclient "go-swagger-client/client"
 	operations "go-swagger-client/client/operations"
@@ -29,8 +29,8 @@ var (
 )
 
 func init() {
-	// transport := httptransport.New("localhost", "", nil)
-	api = apiclient.NewHTTPClientWithConfig(strfmt.Default, nil)
+	transport := httptransport.New("localhost", "", nil)
+	api = apiclient.New(transport, strfmt.Default)
 }
 
 func SendFiles(dirPath string, fileQueue chan string, readyQueue chan string) {

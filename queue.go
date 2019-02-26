@@ -12,7 +12,7 @@ const (
 	SENT_LIST_FN   = "sent_list.txt"
 	INIT_LIST_SIZE = 16
 	EMPTY_VALUE    = ""
-	PERM_ALL       = 0777
+	PERM_ALL       = 0644
 	MODE_APPEND    = os.O_APPEND | os.O_CREATE | os.O_WRONLY
 	MODE_CREATE    = os.O_CREATE | os.O_RDONLY
 	ENDL           = "\n"
