@@ -10,7 +10,7 @@ import (
 	"time"
 	// "context"
 	runtime "github.com/go-openapi/runtime"
-	httptransport "github.com/go-openapi/runtime/client"
+	// httptransport "github.com/go-openapi/runtime/client"
 	strfmt "github.com/go-openapi/strfmt"
 	apiclient "go-swagger-client/client"
 	operations "go-swagger-client/client/operations"
@@ -29,15 +29,15 @@ var (
 )
 
 func init() {
-	transport := httptransport.New("localhost", "", nil)
-	api = apiclient.New(transport, strfmt.Default)
+	// transport := httptransport.New("localhost", "", nil)
+	api = apiclient.NewHTTPClientWithConfig(strfmt.Default, nil)
 }
 
-func SendFiles(dirPath string, url string, fileQueue chan string, readyQueue chan string) {
+func SendFiles(dirPath string, fileQueue chan string, readyQueue chan string) {
 	availableInterfaces()
 	for {
 		fn := <-fileQueue
-		err := sendFile(url, dirPath, fn)
+		err := sendFile(dirPath, fn)
 		if err != nil {
 			log.Println("Failed to send file: ", err)
 			time.Sleep(N_SECONDS * time.Second) // if there is no connection, then wait
@@ -100,7 +100,7 @@ func getClient() *http.Client {
 	return client
 }
 
-func sendFile(url string, dirPath, fn string) error {
+func sendFile(dirPath, fn string) error {
 	f, err := os.Open(path.Join(dirPath, fn))
 	if err != nil {
 		log.Fatal(err)

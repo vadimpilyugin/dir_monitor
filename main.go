@@ -11,16 +11,16 @@ func usage() {
 }
 
 func main() {
-	if len(os.Args) < 3 {
+	if len(os.Args) < 2 {
 		usage()
 	}
 	log.Println("Hello, world!")
 	dirToMonitor := os.Args[1]
-	postUrl := os.Args[2]
+	// postUrl := os.Args[2]
 	fileQueue := make(chan string)
 	readyQueue := make(chan string)
 
 	EnqueueDir(dirToMonitor, fileQueue, readyQueue)
 	StartMonitor(dirToMonitor, fileQueue)
-	SendFiles(dirToMonitor, postUrl, fileQueue, readyQueue)
+	SendFiles(dirToMonitor, fileQueue, readyQueue)
 }
