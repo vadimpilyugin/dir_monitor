@@ -26,6 +26,9 @@ func filterNewFiles(fileQueue chan string, watcher *fsnotify.Watcher) {
 				if event.Op&fsnotify.Create == fsnotify.Create {
 					log.Println("File was created:", fn)
 					createdOrClosed[fn] = EMPTY_VALUE
+				} else if event.Op&fsnotify.Write == fsnotify.Write {
+					log.Println("File was written to:", fn)
+					createdOrClosed[fn] = EMPTY_VALUE
 				} else if event.Op&fsnotify.Close == fsnotify.Close {
 					log.Println("File was closed:", event)
 					if _, found := createdOrClosed[fn]; found {
