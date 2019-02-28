@@ -15,7 +15,7 @@ const (
 	PERM_ALL       = 0644
 	MODE_APPEND    = os.O_APPEND | os.O_CREATE | os.O_WRONLY
 	MODE_CREATE    = os.O_CREATE | os.O_RDONLY
-	MODE_WRITE		 = os.O_CREATE | os.O_WRONLY | os.O_TRUNC
+	MODE_WRITE     = os.O_CREATE | os.O_WRONLY | os.O_TRUNC
 	ENDL           = "\n"
 )
 

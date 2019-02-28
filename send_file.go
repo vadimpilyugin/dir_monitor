@@ -2,18 +2,18 @@ package main
 
 import (
 	"errors"
-	"http_over_at"
-	"log"
-	"net"
-	"net/http"
-	"strings"
-	"time"
 	runtime "github.com/go-openapi/runtime"
 	strfmt "github.com/go-openapi/strfmt"
 	apiclient "go-swagger-client/client"
 	operations "go-swagger-client/client/operations"
+	"http_over_at"
+	"log"
+	"net"
+	"net/http"
 	"os"
 	"path"
+	"strings"
+	"time"
 )
 
 const (
@@ -30,7 +30,7 @@ func initApi(postUrl string) {
 	cfg := apiclient.DefaultTransportConfig()
 	cfg.Host = postUrl
 	api = apiclient.NewHTTPClientWithConfig(
-		strfmt.Default, 
+		strfmt.Default,
 		cfg,
 	)
 }
