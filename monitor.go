@@ -8,7 +8,7 @@ import (
 
 /*
 	Файл запишется в выходную очередь только в том случае, если
-	1) Он был создан и затем
+	1) Он был создан/записан и затем
 	2) он был закрыт
 */
 
@@ -54,7 +54,7 @@ func StartMonitor(path string, fileQueue chan string) {
 
 	err = watcher.Add(path)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("watcher.Add failed: ", err)
 	}
 
 	go filterNewFiles(fileQueue, watcher)

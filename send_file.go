@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 	"time"
-	// "context"
 	runtime "github.com/go-openapi/runtime"
 	strfmt "github.com/go-openapi/strfmt"
 	apiclient "go-swagger-client/client"
@@ -27,8 +26,13 @@ var (
 	api *apiclient.Dirmon
 )
 
-func init() {
-	api = apiclient.NewHTTPClientWithConfig(strfmt.Default, nil)
+func initApi(postUrl string) {
+	cfg := apiclient.DefaultTransportConfig()
+	cfg.Host = postUrl
+	api = apiclient.NewHTTPClientWithConfig(
+		strfmt.Default, 
+		cfg,
+	)
 }
 
 func SendFiles(dirPath string, fileQueue chan string, readyQueue chan string) {
@@ -55,7 +59,7 @@ func noRedir(req *http.Request, via []*http.Request) error {
 func availableInterfaces() {
 	interfaces, err := net.Interfaces()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Could not open net.Interfaces: ", err)
 	}
 	log.Println("Available network interfaces on this machine")
 	for _, i := range interfaces {
@@ -101,7 +105,8 @@ func getClient() *http.Client {
 func sendFile(dirPath, fn string) error {
 	f, err := os.Open(path.Join(dirPath, fn))
 	if err != nil {
-		log.Fatal(err)
+		log.Println("Could not open file to send: ", err)
+		return err
 	}
 	params := operations.NewUploadImagePostParamsWithHTTPClient(getClient())
 	params.SetFile(runtime.NamedReader(fn, f))
@@ -110,9 +115,10 @@ func sendFile(dirPath, fn string) error {
 	if err != nil {
 		return err
 	}
-	log.Println(resp.Payload)
 	if !resp.Payload.Ok {
+		log.Println(resp.Payload)
 		return errors.New(resp.Payload.Descr)
 	}
+	log.Println("Sent file: ", fn)
 	return nil
 }
