@@ -19,7 +19,7 @@ import (
 const (
 	PARAM_NAME       = "file"
 	N_SECONDS        = 1
-	DEFAULT_DURATION = 120
+	DEFAULT_DURATION = 600
 )
 
 var (
