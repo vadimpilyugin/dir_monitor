@@ -17,9 +17,9 @@ import (
 )
 
 const (
-	PARAM_NAME       = "file"
-	N_SECONDS        = 1
-	DEFAULT_DURATION = 600
+	PARAM_NAME     = "file"
+	N_SECONDS      = 1
+	DefaultTimeout = 600
 )
 
 var (
@@ -44,7 +44,7 @@ func SendFiles(dirPath string, fileQueue chan string, readyQueue chan string) {
 			log.Println("Failed to send file: ", err)
 			if _, ok := err.(*os.PathError); ok {
 				log.Println("Path error, removing file from queue")
-				continue;
+				continue
 			}
 			time.Sleep(N_SECONDS * time.Second) // if there is no connection, then wait
 			go func() {
@@ -114,13 +114,24 @@ func sendFile(dirPath, fn string) error {
 	}
 	params := operations.NewUploadImagePostParamsWithHTTPClient(getClient())
 	params.SetFile(runtime.NamedReader(fn, f))
-	params.SetTimeout(DEFAULT_DURATION * time.Second)
+	params.SetTimeout(DefaultTimeout * time.Second)
+	info, err := f.Stat()
+	if err != nil {
+		log.Println("Could not get FileInfo: ", err)
+		return err
+	}
+	log.Printf(
+		"Trying to send file '%s' (size %d bytes), timeout=%d sec\n",
+		info.Name(), info.Size(), DefaultTimeout,
+	)
 	resp, err := api.Operations.UploadImagePost(params)
 	if err != nil {
+		log.Println("UploadImagePost failed: ", err)
 		return err
 	}
 	if !resp.Payload.Ok {
 		log.Println(resp.Payload)
+		log.Println("JSON payload OK is false")
 		return errors.New(resp.Payload.Descr)
 	}
 	log.Println("Sent file: ", fn)
