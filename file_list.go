@@ -24,14 +24,12 @@ func EnqueueDir(dirPath string, inputQueue chan string) {
 	sentList[SENT_LIST_FN] = EMPTY_VALUE
 
 	// put unsent files into the queue
-	go func() {
-		for _, fn := range dirList(dirPath) {
-			if _, found := sentList[fn]; !found {
-				log.Printf("Found unsent file '%s'\n", fn)
-				inputQueue <- fn
-			}
+	for _, fn := range dirList(dirPath) {
+		if _, found := sentList[fn]; !found {
+			log.Printf("Found unsent file '%s'\n", fn)
+			inputQueue <- fn
 		}
-	}()
+	}
 
 	// make new list to remove old entries
 	newSentList := make([]string, 0, len(sentList))
