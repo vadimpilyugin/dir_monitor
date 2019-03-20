@@ -19,7 +19,7 @@ const (
 	ENDL           = "\n"
 )
 
-func EnqueueDir(dirPath string, deleteSent bool, fileQueue chan string, readyQueue chan string) {
+func EnqueueDir(dirPath string, inputQueue chan string) {
 	sentList := readSentList(dirPath)
 	sentList[SENT_LIST_FN] = EMPTY_VALUE
 
@@ -27,7 +27,8 @@ func EnqueueDir(dirPath string, deleteSent bool, fileQueue chan string, readyQue
 	go func() {
 		for _, fn := range dirList(dirPath) {
 			if _, found := sentList[fn]; !found {
-				fileQueue <- fn
+				log.Printf("Found unsent file '%s'\n", fn)
+				inputQueue <- fn
 			}
 		}
 	}()
@@ -41,8 +42,6 @@ func EnqueueDir(dirPath string, deleteSent bool, fileQueue chan string, readyQue
 	}
 
 	rewriteSentList(dirPath, newSentList)
-
-	go writeReadyFiles(dirPath, deleteSent, readyQueue)
 }
 
 func readSentList(dirPath string) map[string]string {
@@ -92,26 +91,26 @@ func dirList(dirPath string) []string {
 	return list
 }
 
-func writeReadyFiles(dirPath string, deleteSent bool, readyQueue chan string) {
-	sentListFile, err := os.OpenFile(path.Join(dirPath, SENT_LIST_FN), MODE_APPEND, PERM_ALL)
-	if err != nil {
-		log.Fatal("Error opening sent_list for reading: ", err)
-	}
-	defer sentListFile.Close()
+func WriteReadyFiles(deleteSent bool, fileManager *FileManager) {
+	go func() {
+		sentListFile, err := os.OpenFile(
+			path.Join(fileManager.dirPath, SENT_LIST_FN), MODE_APPEND, PERM_ALL,
+		)
+		if err != nil {
+			log.Fatal("Error opening sent_list for reading: ", err)
+		}
+		defer sentListFile.Close()
 
-	for {
-		fn := <-readyQueue
-		if deleteSent {
-			err := os.Remove(path.Join(dirPath, fn))
-			if err != nil {
-				log.Println("Could not remove sent file: ", err)
+		for fn := range fileManager.ReadyQueue {
+			if deleteSent {
+				fileManager.RemoveQueue <- fn
+				continue
 			}
-		} else {
 			_, err := sentListFile.WriteString(fn + ENDL)
 			if err != nil {
 				log.Println("Error when writing to sent_list: ", err)
 			}
 			sentListFile.Sync()
 		}
-	}
+	}()
 }

@@ -12,7 +12,7 @@ import (
 	2) он был закрыт
 */
 
-func filterNewFiles(fileQueue chan string, watcher *fsnotify.Watcher) {
+func filterNewFiles(inputQueue chan string, watcher *fsnotify.Watcher) {
 	defer watcher.Close()
 	createdOrClosed := make(map[string]string)
 	for {
@@ -33,7 +33,7 @@ func filterNewFiles(fileQueue chan string, watcher *fsnotify.Watcher) {
 					log.Println("File was closed:", event)
 					if _, found := createdOrClosed[fn]; found {
 						delete(createdOrClosed, fn)
-						fileQueue <- fn
+						inputQueue <- fn
 					}
 				}
 			}
@@ -46,16 +46,16 @@ func filterNewFiles(fileQueue chan string, watcher *fsnotify.Watcher) {
 	}
 }
 
-func StartMonitor(path string, fileQueue chan string) {
+func StartMonitor(dirPath string, inputQueue chan string) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatal("NewWatcher failed:", err)
 	}
 
-	err = watcher.Add(path)
+	err = watcher.Add(dirPath)
 	if err != nil {
 		log.Fatal("watcher.Add failed: ", err)
 	}
 
-	go filterNewFiles(fileQueue, watcher)
+	go filterNewFiles(inputQueue, watcher)
 }

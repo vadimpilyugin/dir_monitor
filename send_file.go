@@ -35,23 +35,21 @@ func initApi(postUrl string) {
 	)
 }
 
-func SendFiles(dirPath string, fileQueue chan string, readyQueue chan string) {
+func SendFiles(fileManager *FileManager) {
 	availableInterfaces()
-	for {
-		fn := <-fileQueue
-		err := sendFile(dirPath, fn)
+	for fn := range fileManager.OutputQueue {
+		err := sendFile(fileManager.dirPath, fn)
 		if err != nil {
 			log.Println("Failed to send file: ", err)
 			if _, ok := err.(*os.PathError); ok {
 				log.Println("Path error, removing file from queue")
+				fileManager.RemoveQueue <- fn
 				continue
 			}
 			time.Sleep(N_SECONDS * time.Second) // if there is no connection, then wait
-			go func() {
-				fileQueue <- fn
-			}()
+			fileManager.PutBackCh <- fn
 		} else {
-			readyQueue <- fn
+			fileManager.ReadyQueue <- fn
 		}
 	}
 }
@@ -134,6 +132,6 @@ func sendFile(dirPath, fn string) error {
 		log.Println("JSON payload OK is false")
 		return errors.New(resp.Payload.Descr)
 	}
-	log.Println("Sent file: ", fn)
+	log.Println("Sent file:", fn)
 	return nil
 }

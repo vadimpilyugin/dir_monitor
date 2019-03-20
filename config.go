@@ -15,12 +15,20 @@ type Internal struct {
 	LogWriter  string `ini:"log_writer"`
 }
 
+type QueueSettings struct {
+	LimitQueueSize bool `ini:"limit_backlog"`
+	MaxQueueSize int64 `ini:"backlog_max_size"`
+	RemoveSmallFiles bool `ini:"remove_small_files"`
+	MinRemoveSize int64 `ini:"min_remove_size"`
+}
+
 type Network struct {
 	PostUrl string `ini:"post_url"`
 }
 
 type Config struct {
 	Internal `ini:"internal"`
+	QueueSettings `ini:"queue"`
 	Network  `ini:"network"`
 }
 
