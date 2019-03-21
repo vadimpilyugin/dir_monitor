@@ -22,12 +22,12 @@ func filterNewFiles(inputQueue chan string, watcher *fsnotify.Watcher) {
 				log.Println("Could not read event:", event, ok)
 			} else {
 				fn := path.Base(event.Name)
-				log.Println("New event:", event)
+				// log.Println("New event:", event)
 				if event.Op&fsnotify.Create == fsnotify.Create {
 					log.Println("File was created:", fn)
 					createdOrClosed[fn] = EMPTY_VALUE
 				} else if event.Op&fsnotify.Write == fsnotify.Write {
-					log.Println("File was written to:", fn)
+					// log.Println("File was written to:", fn)
 					createdOrClosed[fn] = EMPTY_VALUE
 				} else if event.Op&fsnotify.Close == fsnotify.Close {
 					log.Println("File was closed:", event)

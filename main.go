@@ -27,8 +27,7 @@ func setupCmd() (string, string, string, bool, QueueSettings) {
 
 func setupLogger(logWriter string) {
 	if logWriter == SYSLOG_WRITER {
-		w, err := syslog.Dial(SYSLOG_PROTO, SYSLOG_ADDRESS,
-			syslog.LOG_WARNING, TAG)
+		w, err := syslog.New(syslog.LOG_NOTICE, TAG)
 		if err != nil {
 			log.Println("Couldn't connect to syslogd: ", err)
 			return
