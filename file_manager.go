@@ -146,11 +146,12 @@ func (fm *FileManager) Start() {
       case fn := <-fm.PutBackCh:
         fm.push(fn, BACK)
       case <-fm.hasToSend:
-        fileNode := fm.fileNodes.Front().Value.(FileNode)
+        elemToSend := fm.fileNodes.Back()
+        fileNode := elemToSend.Value.(FileNode)
         select {
         case fm.OutputQueue <- fileNode.Name:
           fm.queueSize -= fileNode.Size
-          fm.fileNodes.Remove(fm.fileNodes.Front())
+          fm.fileNodes.Remove(elemToSend)
           if fm.fileNodes.Len() > 0 {
             fm.putMark()
           }
