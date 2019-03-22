@@ -13,6 +13,7 @@ type Internal struct {
 	Directory  string `ini:"dir_to_monitor"`
 	DeleteSent bool   `ini:"delete_sent"`
 	LogWriter  string `ini:"log_writer"`
+	UseAT bool	`ini:"use_at"`
 }
 
 type QueueSettings struct {
