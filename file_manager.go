@@ -6,6 +6,7 @@ import (
   "path"
   "container/list"
   "time"
+  "regexp"
 )
 
  const (
@@ -32,6 +33,7 @@ type FileManager struct {
   qSet QueueSettings
   dirPath string
   fileNodes *list.List
+  latestInfoNode *list.Element
 }
 
 type FileNode struct {
@@ -51,6 +53,7 @@ func InitFileManager(dirPath string, qSet QueueSettings) *FileManager {
     qSet: qSet,
     dirPath: dirPath,
     fileNodes: list.New(),
+    latestInfoNode: nil,
   }
   fm.Start()
   return fm
@@ -138,20 +141,33 @@ func (fm *FileManager) push(fn, direction string) {
 }
 
 func (fm *FileManager) Start() {
+  infoFn := regexp.MustCompile("^info_")
+
   go func() {
     for {
       select {
       case fn := <-fm.InputQueue:
         fm.push(fn, FRONT)
+        if infoFn.FindString(fn) != "" {
+          // if file is an info file
+          fm.latestInfoNode = fm.fileNodes.Front()
+          log.Printf("Found new info file: %s\n", fn)
+        }
       case fn := <-fm.PutBackCh:
         fm.push(fn, BACK)
       case <-fm.hasToSend:
         elemToSend := fm.fileNodes.Back()
+        if fm.latestInfoNode != nil {
+          elemToSend = fm.latestInfoNode
+        }
         fileNode := elemToSend.Value.(FileNode)
         select {
         case fm.OutputQueue <- fileNode.Name:
           fm.queueSize -= fileNode.Size
           fm.fileNodes.Remove(elemToSend)
+          if elemToSend == fm.latestInfoNode {
+            fm.latestInfoNode = nil
+          }
           if fm.fileNodes.Len() > 0 {
             fm.putMark()
           }

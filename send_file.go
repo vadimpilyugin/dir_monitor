@@ -100,7 +100,7 @@ func getClient(useAT bool) *http.Client {
 			Transport: http_over_at.Rqstr,
 		}
 		log.Println("--- Using USB interface")
-	} else {
+	} else if !up {
 		log.Println("--- Not using AT interface and no interface is available!")
 	}
 	return client
