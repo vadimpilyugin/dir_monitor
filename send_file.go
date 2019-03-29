@@ -35,10 +35,10 @@ func initApi(postUrl string) {
 	)
 }
 
-func SendFiles(fileManager *FileManager) {
+func SendFiles(fileManager *FileManager, useAT bool) {
 	availableInterfaces()
 	for fn := range fileManager.OutputQueue {
-		err := sendFile(fileManager.dirPath, fn)
+		err := sendFile(fileManager.dirPath, fn, useAT)
 		if err != nil {
 			log.Println("Failed to send file: ", err)
 			if _, ok := err.(*os.PathError); ok {
@@ -82,7 +82,7 @@ func checkInterface(ifName string) bool {
 	}
 }
 
-func getClient() *http.Client {
+func getClient(useAT bool) *http.Client {
 	var client *http.Client
 	up := false
 	for _, interfc := range []string{"ppp0", "eth0", "enp3s0"} {
@@ -95,22 +95,24 @@ func getClient() *http.Client {
 			break
 		}
 	}
-	if !up {
+	if !up && useAT {
 		client = &http.Client{
 			Transport: http_over_at.Rqstr,
 		}
 		log.Println("--- Using USB interface")
+	} else {
+		log.Println("--- Not using AT interface and no interface is available!")
 	}
 	return client
 }
 
-func sendFile(dirPath, fn string) error {
+func sendFile(dirPath, fn string, useAT bool) error {
 	f, err := os.Open(path.Join(dirPath, fn))
 	if err != nil {
 		log.Println("Could not open file to send: ", err)
 		return err
 	}
-	params := operations.NewUploadImagePostParamsWithHTTPClient(getClient())
+	params := operations.NewUploadImagePostParamsWithHTTPClient(getClient(useAT))
 	params.SetFile(runtime.NamedReader(fn, f))
 	params.SetTimeout(DefaultTimeout * time.Second)
 	info, err := f.Stat()
