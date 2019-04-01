@@ -25,6 +25,12 @@ type QueueSettings struct {
 
 type Network struct {
 	PostUrl string `ini:"post_url"`
+	LimitBandwidth bool `ini:"limit_bandwidth"`
+	WaitFor int `ini:"wait_for"`
+	BufLen int `ini:"buflen"`
+	SendTimeout int `ini:"send_timeout"`
+	DialTimeout int `ini:"dial_timeout"`
+	RetryWaitFor int `ini:"retry_wait_for"`
 }
 
 type Config struct {

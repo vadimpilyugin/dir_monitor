@@ -14,7 +14,7 @@ const (
 	TAG            = "dir_monitor"
 )
 
-func setupCmd() (string, string, string, bool, QueueSettings, bool) {
+func setupCmd() (*Config, string, string, string, bool) {
 	cfg := readConfig()
 	dirToMonitor := flag.String("dir", cfg.Internal.Directory, "directory to monitor")
 	postUrl := flag.String("url", cfg.Network.PostUrl, "where to send files")
@@ -22,7 +22,7 @@ func setupCmd() (string, string, string, bool, QueueSettings, bool) {
 		"where to write logs: either 'stdout' or 'syslog'")
 	deleteSent := flag.Bool("cleanup", cfg.Internal.DeleteSent, "whether to delete sent files")
 	flag.Parse()
-	return *dirToMonitor, *postUrl, *logWriter, *deleteSent, cfg.QueueSettings, cfg.UseAT
+	return cfg, *dirToMonitor, *postUrl, *logWriter, *deleteSent
 }
 
 func setupLogger(logWriter string) {
@@ -37,14 +37,14 @@ func setupLogger(logWriter string) {
 }
 
 func main() {
-	dirToMonitor, postUrl, logWriter, deleteSent, qSet, useAT := setupCmd()
+	cfg, dirToMonitor, postUrl, logWriter, deleteSent := setupCmd()
 	setupLogger(logWriter)
-	fileManager := InitFileManager(dirToMonitor, qSet)
+	fileManager := InitFileManager(dirToMonitor, cfg.QueueSettings)
 
 	initApi(postUrl)
 
 	EnqueueDir(dirToMonitor, fileManager.InputQueue)
 	WriteReadyFiles(deleteSent, fileManager)
 	StartMonitor(dirToMonitor, fileManager.InputQueue)
-	SendFiles(fileManager, useAT)
+	SendFiles(fileManager, cfg)
 }
