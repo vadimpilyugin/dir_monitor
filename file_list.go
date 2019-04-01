@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"sort"
 	"path"
 )
 
@@ -76,6 +77,28 @@ func rewriteSentList(dirPath string, newSentList []string) {
 	sentListFile.Sync()
 }
 
+func sortByModifDate(dirPath string, files []string) []string {
+	filesInfo := make([]os.FileInfo, 0, len(files))
+	for _, fn := range files {
+		filePath := path.Join(dirPath, fn)
+		info, err := os.Stat(filePath)
+		if err != nil {
+			log.Printf("Could not get file info of %s: %v\n", filePath, err)
+			continue
+		}
+		filesInfo = append(filesInfo, info)
+	}
+	sort.Slice(filesInfo, func(i, j int) bool {
+		return filesInfo[i].ModTime().UnixNano() < filesInfo[j].ModTime().UnixNano()
+	})
+
+	files = make([]string, len(filesInfo), len(filesInfo))
+	for i := 0; i < len(filesInfo); i++ {
+		files[i] = filesInfo[i].Name()
+	}
+	return files
+}
+
 func dirList(dirPath string) []string {
 	files, err := ioutil.ReadDir(dirPath)
 	if err != nil {
@@ -86,6 +109,8 @@ func dirList(dirPath string) []string {
 	for _, file := range files {
 		list = append(list, file.Name())
 	}
+
+	list = sortByModifDate(dirPath, list)
 	return list
 }
 

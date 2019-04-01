@@ -14,12 +14,11 @@ import (
 	"path"
 	"strings"
 	"time"
+	"io"
 )
 
 const (
-	PARAM_NAME     = "file"
-	N_SECONDS      = 1
-	DefaultTimeout = 600
+	DontWait = 0
 )
 
 var (
@@ -35,10 +34,10 @@ func initApi(postUrl string) {
 	)
 }
 
-func SendFiles(fileManager *FileManager, useAT bool) {
+func SendFiles(fileManager *FileManager, cfg *Config) {
 	availableInterfaces()
 	for fn := range fileManager.OutputQueue {
-		err := sendFile(fileManager.dirPath, fn, useAT)
+		err := sendFile(cfg, fn)
 		if err != nil {
 			log.Println("Failed to send file: ", err)
 			if _, ok := err.(*os.PathError); ok {
@@ -46,7 +45,8 @@ func SendFiles(fileManager *FileManager, useAT bool) {
 				fileManager.RemoveQueue <- fn
 				continue
 			}
-			time.Sleep(N_SECONDS * time.Second) // if there is no connection, then wait
+			// wait if there is no connection
+			time.Sleep(time.Duration(cfg.RetryWaitFor) * time.Second) 
 			fileManager.PutBackCh <- fn
 		} else {
 			fileManager.ReadyQueue <- fn
@@ -61,7 +61,7 @@ func noRedir(req *http.Request, via []*http.Request) error {
 func availableInterfaces() {
 	interfaces, err := net.Interfaces()
 	if err != nil {
-		log.Fatal("Could not open net.Interfaces: ", err)
+		log.Println("Could not open net.Interfaces: ", err)
 	}
 	log.Println("Available network interfaces on this machine")
 	for _, i := range interfaces {
@@ -82,39 +82,90 @@ func checkInterface(ifName string) bool {
 	}
 }
 
-func getClient(useAT bool) *http.Client {
-	var client *http.Client
+func getClient(useAT bool, sendTimeout, dialTimeout int) *http.Client {
+	// var client *http.Client
+	transport := &http.Transport{
+		DialContext: (&net.Dialer{
+			Timeout:   time.Duration(dialTimeout) * time.Second,
+		}).DialContext,
+	}
+
+	client := &http.Client{
+		Timeout:   time.Second * time.Duration(sendTimeout),
+		Transport: transport,
+	}
 	up := false
 	for _, interfc := range []string{"ppp0", "eth0", "enp3s0"} {
 		if checkInterface(interfc) {
-			client = &http.Client{
-				CheckRedirect: noRedir,
-			}
+			client.CheckRedirect = noRedir
 			up = true
 			log.Println("--- Using interface: ", interfc)
 			break
 		}
 	}
 	if !up && useAT {
-		client = &http.Client{
-			Transport: http_over_at.Rqstr,
-		}
-		log.Println("--- Using USB interface")
+		client.Transport = http_over_at.Rqstr
+		log.Println("--- Using AT interface")
 	} else if !up {
 		log.Println("--- Not using AT interface and no interface is available!")
 	}
 	return client
 }
 
-func sendFile(dirPath, fn string, useAT bool) error {
-	f, err := os.Open(path.Join(dirPath, fn))
+func limitedWriter(f *os.File, pw *io.PipeWriter, buflen int, waitfor int) {
+
+	buf := make([]byte, buflen)
+	duration := time.Duration(waitfor) * time.Second
+	var timer *time.Timer
+
+OuterFor:
+	for {
+		nRead, err := f.Read(buf)
+		if nRead == 0 && err == io.EOF {
+			pw.Close()
+			break OuterFor
+		}
+		if err != nil {
+			log.Println("Error occured when reading from file:", err)
+			pw.CloseWithError(err)
+			break OuterFor
+		}
+		dataToWrite := buf[:nRead]
+		for len(dataToWrite) > 0 {
+			nWritten, err := pw.Write(dataToWrite)
+			if err != nil {
+				log.Println("Pipe reading end returned an error:", err)
+				pw.CloseWithError(err)
+				break OuterFor
+			}
+			if nWritten != len(dataToWrite) {
+				log.Printf(
+					"Warning: slow pipe reader! Available %d bytes, read %d bytes\n",
+					len(dataToWrite), nWritten,
+				)
+			}
+			dataToWrite = dataToWrite[nWritten:]
+		}
+
+		if timer == nil {
+				timer = time.NewTimer(duration)
+		} else {
+			timer.Reset(duration)
+		}
+
+		<-timer.C
+	}
+}
+
+func sendFile(cfg *Config, fn string) error {
+	filePath := path.Join(cfg.Directory, fn)
+	f, err := os.Open(filePath)
 	if err != nil {
-		log.Println("Could not open file to send: ", err)
+		log.Println("Could not open file to send:", err)
 		return err
 	}
-	params := operations.NewUploadImagePostParamsWithHTTPClient(getClient(useAT))
-	params.SetFile(runtime.NamedReader(fn, f))
-	params.SetTimeout(DefaultTimeout * time.Second)
+	defer f.Close()
+
 	info, err := f.Stat()
 	if err != nil {
 		log.Println("Could not get FileInfo: ", err)
@@ -122,8 +173,22 @@ func sendFile(dirPath, fn string, useAT bool) error {
 	}
 	log.Printf(
 		"Trying to send file '%s' (size %d bytes), timeout=%d sec\n",
-		info.Name(), info.Size(), DefaultTimeout,
+		info.Name(), info.Size(), cfg.SendTimeout,
 	)
+
+	pr, pw := io.Pipe()
+	if cfg.LimitBandwidth {
+		go limitedWriter(f, pw, cfg.BufLen, cfg.WaitFor)
+	} else {
+		go limitedWriter(f, pw, cfg.BufLen, DontWait)
+	}
+
+	params := operations.NewUploadImagePostParamsWithHTTPClient(
+		getClient(cfg.UseAT, cfg.SendTimeout, cfg.DialTimeout),
+	)
+	params.SetFile(runtime.NamedReader(fn, pr))
+	params.SetTimeout(time.Duration(cfg.SendTimeout) * time.Second)
+	
 	resp, err := api.Operations.UploadImagePost(params)
 	if err != nil {
 		log.Println("UploadImagePost failed: ", err)
