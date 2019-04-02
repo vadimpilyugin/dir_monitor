@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	CONFIG_FN = "config.ini"
+	CONFIG_FN = "/home/pilyugin_v/go/src/dir_monitor/config.ini"
 )
 
 type Internal struct {
