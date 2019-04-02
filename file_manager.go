@@ -16,6 +16,7 @@ import (
   GB
   TB
   WAITFOR = 10
+  N_DIRECTION = 3
   FRONT = "front"
   BACK = "back"
 )
@@ -34,6 +35,8 @@ type FileManager struct {
   dirPath string
   fileNodes *list.List
   latestInfoNode *list.Element
+  currDirection string
+  directionCount int
 }
 
 type FileNode struct {
@@ -54,6 +57,8 @@ func InitFileManager(dirPath string, qSet QueueSettings) *FileManager {
     dirPath: dirPath,
     fileNodes: list.New(),
     latestInfoNode: nil,
+    currDirection: BACK,
+    directionCount: 0,
   }
   fm.Start()
   return fm
@@ -140,6 +145,31 @@ func (fm *FileManager) push(fn, direction string) {
 
 }
 
+func (fm *FileManager) TakeElemToSend() *list.Element {
+  var elemToSend *list.Element
+
+  if fm.latestInfoNode != nil {
+    elemToSend = fm.latestInfoNode
+  } else {
+    fm.directionCount++
+    if fm.currDirection == BACK {
+      elemToSend = fm.fileNodes.Back()
+    } else {
+      elemToSend = fm.fileNodes.Front()
+    }
+    if fm.directionCount >= N_DIRECTION {
+      if fm.currDirection == BACK {
+        fm.currDirection = FRONT
+      } else {
+        fm.currDirection = BACK
+      }
+      fm.directionCount = 0
+    }
+  }
+
+  return elemToSend
+}
+
 func (fm *FileManager) Start() {
   infoFn := regexp.MustCompile("^info_")
 
@@ -156,10 +186,7 @@ func (fm *FileManager) Start() {
       case fn := <-fm.PutBackCh:
         fm.push(fn, BACK)
       case <-fm.hasToSend:
-        elemToSend := fm.fileNodes.Back()
-        if fm.latestInfoNode != nil {
-          elemToSend = fm.latestInfoNode
-        }
+        elemToSend := fm.TakeElemToSend()
         fileNode := elemToSend.Value.(FileNode)
         select {
         case fm.OutputQueue <- fileNode.Name:
