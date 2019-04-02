@@ -17,6 +17,7 @@ import (
   TB
   WAITFOR = 10
   N_DIRECTION = 3
+  LOG_EVERY_N = 10
   FRONT = "front"
   BACK = "back"
 )
@@ -106,6 +107,35 @@ func (fm *FileManager) takeMark () {
   }
 }
 
+func (fm *FileManager) logState() {
+  log.Println("===========================================================")
+  log.Printf("Queue currently has %d elements [%d bytes]\n",
+    fm.fileNodes.Len(), fm.queueSize,
+  )
+  log.Printf("Sending direction is %s: we are %d elements in, thresh=%d\n",
+    fm.currDirection, fm.directionCount, N_DIRECTION,
+  )
+  if fm.latestInfoNode != nil {
+    log.Println("There is an info node: %s", fm.latestInfoNode.Value.(FileNode).Name)
+  }
+  log.Println("")
+  i := 0
+  for fileNode := fm.fileNodes.Front(); fileNode != nil; fileNode = fileNode.Next() {
+    i++
+    log.Printf("%d.\t%s", i, fileNode.Value.(FileNode).Name)
+    if fileNode == fm.fileNodes.Front() {
+      log.Println(" <--- FRONT")
+    } else if fileNode == fm.fileNodes.Back() {
+      log.Println(" <--- BACK")
+    } else if fileNode == fm.latestInfoNode {
+      log.Println(" <--- LATEST INFO NODE")
+    } else {
+      log.Println("")
+    }
+  }
+  log.Println("===========================================================")
+}
+
 func (fm *FileManager) push(fn, direction string) {
   absPath := path.Join(fm.dirPath, fn)
   info, err := os.Stat(absPath)
@@ -143,6 +173,7 @@ func (fm *FileManager) push(fn, direction string) {
     fm.takeMark()
   }
 
+  fm.logState()
 }
 
 func (fm *FileManager) TakeElemToSend() *list.Element {
@@ -166,7 +197,7 @@ func (fm *FileManager) TakeElemToSend() *list.Element {
       fm.directionCount = 0
     }
   }
-
+  fm.logState()
   return elemToSend
 }
 
