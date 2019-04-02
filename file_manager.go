@@ -123,12 +123,12 @@ func (fm *FileManager) logState() {
   for fileNode := fm.fileNodes.Front(); fileNode != nil; fileNode = fileNode.Next() {
     i++
     comment := ""
-    if fileNode == fm.fileNodes.Front() {
+    if fileNode == fm.latestInfoNode {
+      comment = "<--- INFO NODE"
+    } else if fileNode == fm.fileNodes.Front() {
       comment = "<--- FRONT"
     } else if fileNode == fm.fileNodes.Back() {
       comment = "<--- BACK"
-    } else if fileNode == fm.latestInfoNode {
-      comment = "<--- INFO NODE"
     }
     log.Printf("%d. %s %s", i, fileNode.Value.(FileNode).Name, comment)
   }
@@ -173,28 +173,30 @@ func (fm *FileManager) push(fn, direction string) {
   }
 }
 
-func (fm *FileManager) TakeElemToSend() *list.Element {
-  var elemToSend *list.Element
-
+func (fm *FileManager) GetElemToSend() *list.Element {
   if fm.latestInfoNode != nil {
-    elemToSend = fm.latestInfoNode
-  } else {
-    fm.directionCount++
-    if fm.currDirection == BACK {
-      elemToSend = fm.fileNodes.Back()
-    } else {
-      elemToSend = fm.fileNodes.Front()
-    }
-    if fm.directionCount >= N_DIRECTION {
-      if fm.currDirection == BACK {
-        fm.currDirection = FRONT
-      } else {
-        fm.currDirection = BACK
-      }
-      fm.directionCount = 0
-    }
+    return fm.latestInfoNode
   }
-  return elemToSend
+  if fm.currDirection == BACK {
+    return fm.fileNodes.Back()
+  }
+  return fm.fileNodes.Front()
+}
+
+func (fm *FileManager) AdvanceElemToSend() {
+  if fm.latestInfoNode != nil {
+    fm.latestInfoNode = nil
+    return
+  }
+  fm.directionCount++
+  if fm.directionCount > N_DIRECTION {
+    if fm.currDirection == BACK {
+      fm.currDirection = FRONT
+    } else {
+      fm.currDirection = BACK
+    }
+    fm.directionCount = 0
+  }
 }
 
 func (fm *FileManager) Start() {
@@ -215,15 +217,13 @@ func (fm *FileManager) Start() {
         fm.push(fn, BACK)
         fm.logState()
       case <-fm.hasToSend:
-        elemToSend := fm.TakeElemToSend()
+        elemToSend := fm.GetElemToSend()
         fileNode := elemToSend.Value.(FileNode)
         select {
         case fm.OutputQueue <- fileNode.Name:
           fm.queueSize -= fileNode.Size
           fm.fileNodes.Remove(elemToSend)
-          if elemToSend == fm.latestInfoNode {
-            fm.latestInfoNode = nil
-          }
+          fm.AdvanceElemToSend()
           if fm.fileNodes.Len() > 0 {
             fm.putMark()
           }
