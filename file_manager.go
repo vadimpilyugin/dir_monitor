@@ -18,8 +18,8 @@ import (
   WAITFOR = 10
   N_DIRECTION = 3
   LOG_EVERY_N = 10
-  FRONT = "front"
-  BACK = "back"
+  FRONT = "FRONT"
+  BACK = "BACK"
 )
 
 type empty struct{}
@@ -112,26 +112,25 @@ func (fm *FileManager) logState() {
   log.Printf("Queue currently has %d elements [%d bytes]\n",
     fm.fileNodes.Len(), fm.queueSize,
   )
-  log.Printf("Sending direction is %s: we are %d elements in, thresh=%d\n",
+  log.Printf("Sending direction is '%s': we are %d elements in, thresh=%d\n",
     fm.currDirection, fm.directionCount, N_DIRECTION,
   )
   if fm.latestInfoNode != nil {
-    log.Println("There is an info node: %s", fm.latestInfoNode.Value.(FileNode).Name)
+    log.Printf("There is an info node: %s\n", fm.latestInfoNode.Value.(FileNode).Name)
   }
   log.Println("")
   i := 0
   for fileNode := fm.fileNodes.Front(); fileNode != nil; fileNode = fileNode.Next() {
     i++
-    log.Printf("%d.\t%s", i, fileNode.Value.(FileNode).Name)
+    comment := ""
     if fileNode == fm.fileNodes.Front() {
-      log.Println(" <--- FRONT")
+      comment = "<--- FRONT"
     } else if fileNode == fm.fileNodes.Back() {
-      log.Println(" <--- BACK")
+      comment = "<--- BACK"
     } else if fileNode == fm.latestInfoNode {
-      log.Println(" <--- LATEST INFO NODE")
-    } else {
-      log.Println("")
+      comment = "<--- INFO NODE"
     }
+    log.Printf("%d. %s %s", i, fileNode.Value.(FileNode).Name, comment)
   }
   log.Println("===========================================================")
 }
@@ -172,8 +171,6 @@ func (fm *FileManager) push(fn, direction string) {
   } else {
     fm.takeMark()
   }
-
-  fm.logState()
 }
 
 func (fm *FileManager) TakeElemToSend() *list.Element {
@@ -197,7 +194,6 @@ func (fm *FileManager) TakeElemToSend() *list.Element {
       fm.directionCount = 0
     }
   }
-  fm.logState()
   return elemToSend
 }
 
@@ -214,8 +210,10 @@ func (fm *FileManager) Start() {
           fm.latestInfoNode = fm.fileNodes.Front()
           log.Printf("Found new info file: %s\n", fn)
         }
+        fm.logState()
       case fn := <-fm.PutBackCh:
         fm.push(fn, BACK)
+        fm.logState()
       case <-fm.hasToSend:
         elemToSend := fm.TakeElemToSend()
         fileNode := elemToSend.Value.(FileNode)
@@ -232,6 +230,7 @@ func (fm *FileManager) Start() {
           log.Printf("Removed file '%s' [ %d bytes ] from the queue [ len=%d, %d bytes ]\n",
             fileNode.Name, fileNode.Size, fm.fileNodes.Len(), fm.queueSize,
           )
+          fm.logState()
         default:
           fm.putMark()
           time.Sleep(WAITFOR * time.Millisecond)
