@@ -117,6 +117,8 @@ func (fm *FileManager) logState() {
   )
   if fm.latestInfoNode != nil {
     log.Printf("There is an info node: %s\n", fm.latestInfoNode.Value.(FileNode).Name)
+  } else {
+    log.Println("There are no info nodes yet...")
   }
   log.Println("")
   i := 0
