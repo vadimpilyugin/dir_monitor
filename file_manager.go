@@ -132,7 +132,9 @@ func (fm *FileManager) logState() {
     } else if fileNode == fm.fileNodes.Back() {
       comment = "<--- BACK"
     }
-    log.Printf("%d. %s %s", i, fileNode.Value.(FileNode).Name, comment)
+    if comment != "" {
+      log.Printf("%d. %s %s", i, fileNode.Value.(FileNode).Name, comment)
+    }
   }
   log.Println("===========================================================")
 }
