@@ -82,18 +82,16 @@ func checkInterface(ifName string) bool {
 	}
 }
 
-func getClient(useAT bool, sendTimeout, dialTimeout int) *http.Client {
-	// var client *http.Client
-	transport := &http.Transport{
-		DialContext: (&net.Dialer{
-			Timeout:   time.Duration(dialTimeout) * time.Second,
-		}).DialContext,
-	}
+var client *http.Client
 
-	client := &http.Client{
-		Timeout:   time.Second * time.Duration(sendTimeout),
-		Transport: transport,
-	}
+func getClient(useAT bool, sendTimeout, dialTimeout int) *http.Client {
+
+	client.Transport.(*http.Transport).DialContext = (&net.Dialer{
+    Timeout:   time.Duration(dialTimeout) * time.Second,
+    KeepAlive: 30 * time.Second,
+    DualStack: true,
+  }).DialContext
+
 	up := false
 	for _, interfc := range []string{"ppp0", "eth0", "enp3s0"} {
 		if checkInterface(interfc) {
@@ -104,6 +102,7 @@ func getClient(useAT bool, sendTimeout, dialTimeout int) *http.Client {
 		}
 	}
 	if !up && useAT {
+		// FIXME: SSL will stop working
 		client.Transport = http_over_at.Rqstr
 		log.Println("--- Using AT interface")
 	} else if !up {

@@ -216,10 +216,10 @@ func (fm *FileManager) Start() {
           fm.latestInfoNode = fm.fileNodes.Front()
           log.Printf("Found new info file: %s\n", fn)
         }
-        fm.logState()
+        // fm.logState()
       case fn := <-fm.PutBackCh:
         fm.push(fn, BACK)
-        fm.logState()
+        // fm.logState()
       case <-fm.hasToSend:
         elemToSend := fm.GetElemToSend()
         fileNode := elemToSend.Value.(FileNode)
@@ -234,7 +234,7 @@ func (fm *FileManager) Start() {
           log.Printf("Removed file '%s' [ %d bytes ] from the queue [ len=%d, %d bytes ]\n",
             fileNode.Name, fileNode.Size, fm.fileNodes.Len(), fm.queueSize,
           )
-          fm.logState()
+          // fm.logState()
         default:
           fm.putMark()
           time.Sleep(WAITFOR * time.Millisecond)

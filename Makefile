@@ -7,8 +7,8 @@ BINARY_NAME=monitor
 BINARY_UNIX=$(BINARY_NAME)_unix
 
 all: $(BINARY_NAME)
-$(BINARY_NAME): *.go
-	$(GOBUILD) -o $(BINARY_NAME) -v
+$(BINARY_NAME): main.go tls-client.go send_file.go file_manager.go config.go file_list.go monitor.go
+	$(GOBUILD) -o $(BINARY_NAME) $^
 clean: 
 	$(GOCLEAN)
 	rm -f $(BINARY_NAME)

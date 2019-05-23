@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	CONFIG_FN = "/home/pilyugin_v/go/src/dir_monitor/config.ini"
+	CONFIG_FN = "config.ini"
 )
 
 type Internal struct {
@@ -33,10 +33,17 @@ type Network struct {
 	RetryWaitFor int `ini:"retry_wait_for"`
 }
 
+type Security struct {
+	ServerCAFile string `ini:"server_ca"`
+	CertFile string `ini:"cert_file"`
+	KeyFile string `ini:"key_file"`
+}
+
 type Config struct {
 	Internal `ini:"internal"`
 	QueueSettings `ini:"queue"`
 	Network  `ini:"network"`
+	Security  `ini:"security"`
 }
 
 func readConfig() *Config {

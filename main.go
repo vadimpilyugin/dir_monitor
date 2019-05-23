@@ -39,6 +39,15 @@ func setupLogger(logWriter string) {
 func main() {
 	cfg, dirToMonitor, postUrl, logWriter, deleteSent := setupCmd()
 	setupLogger(logWriter)
+	log.Printf("cfg: %#v\n", cfg)
+	
+	var err error
+	client, err = getSecureClient(cfg.ServerCAFile, cfg.CertFile, cfg.KeyFile)
+	if err != nil {
+		log.Fatal("Could not get secure http client:", err)
+	}
+	// client = &http.Client{}
+	
 	fileManager := InitFileManager(dirToMonitor, cfg.QueueSettings)
 
 	initApi(postUrl)
