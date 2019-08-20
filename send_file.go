@@ -7,6 +7,7 @@ import (
 	apiclient "go-swagger-client/client"
 	operations "go-swagger-client/client/operations"
 	"http_over_at"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -14,7 +15,6 @@ import (
 	"path"
 	"strings"
 	"time"
-	"io"
 )
 
 const (
@@ -46,7 +46,7 @@ func SendFiles(fileManager *FileManager, cfg *Config) {
 				continue
 			}
 			// wait if there is no connection
-			time.Sleep(time.Duration(cfg.RetryWaitFor) * time.Second) 
+			time.Sleep(time.Duration(cfg.RetryWaitFor) * time.Second)
 			fileManager.PutBackCh <- fn
 		} else {
 			fileManager.ReadyQueue <- fn
@@ -87,10 +87,10 @@ var client *http.Client
 func getClient(useAT bool, sendTimeout, dialTimeout int) *http.Client {
 
 	client.Transport.(*http.Transport).DialContext = (&net.Dialer{
-    Timeout:   time.Duration(dialTimeout) * time.Second,
-    KeepAlive: 30 * time.Second,
-    DualStack: true,
-  }).DialContext
+		Timeout:   time.Duration(dialTimeout) * time.Second,
+		KeepAlive: 30 * time.Second,
+		DualStack: true,
+	}).DialContext
 
 	up := false
 	for _, interfc := range []string{"ppp0", "eth0", "enp3s0"} {
@@ -147,7 +147,7 @@ OuterFor:
 		}
 
 		if timer == nil {
-				timer = time.NewTimer(duration)
+			timer = time.NewTimer(duration)
 		} else {
 			timer.Reset(duration)
 		}
@@ -187,7 +187,7 @@ func sendFile(cfg *Config, fn string) error {
 	)
 	params.SetFile(runtime.NamedReader(fn, pr))
 	params.SetTimeout(time.Duration(cfg.SendTimeout) * time.Second)
-	
+
 	resp, err := api.Operations.UploadImagePost(params)
 	if err != nil {
 		log.Println("UploadImagePost failed: ", err)

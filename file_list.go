@@ -5,8 +5,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"sort"
 	"path"
+	"sort"
 )
 
 const (
